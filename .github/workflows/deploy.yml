@@ -31,6 +31,9 @@ jobs:
         acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
         containerAppName: ${{ env.CONTAINER_APP_NAME }}
         resourceGroup: ${{ env.RESOURCE_GROUP }}
+        containerAppEnvironment: ${{ env.CONTAINER_APP_ENVIRONMENT }}
+        targetPort: 8000
+        ingress: external
         environmentVariables: |
           ENVIRONMENT=production
           AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}
