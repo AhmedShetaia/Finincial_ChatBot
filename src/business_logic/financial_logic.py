@@ -1,5 +1,5 @@
-from src.models.financial_model import FinancialState
-from src.services.financial_service import FinancialService
+from models.financial_model import FinancialState
+from services.financial_service import FinancialService
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from typing import List, Dict, Any
 

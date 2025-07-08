@@ -1,15 +1,15 @@
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationSummaryMemory
-from langchain_core.chat_history import ChatMessageHistory
+from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
-from src.models.financial_model import FinancialState
-from src.data.financial_tools import (
+from models.financial_model import FinancialState
+from data.financial_tools import (
     fetch_stock_price, fetch_historical_data, fetch_dividends,
     fetch_market_data, fetch_currency_conversion, fetch_company_info
 )
-from src.business_logic.financial_logic import FinancialLogic
+from business_logic.financial_logic import FinancialLogic
 import os
 from typing import Dict, Any
 
@@ -22,7 +22,7 @@ class AIIntegration:
         )
         
         # Initialize memory
-        self.chat_history = ChatMessageHistory()
+        self.chat_history = InMemoryChatMessageHistory()
         self.memory = ConversationSummaryMemory(
             llm=self.model,
             chat_memory=self.chat_history,

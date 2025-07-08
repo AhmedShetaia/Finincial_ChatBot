@@ -5,17 +5,17 @@ import json
 import asyncio
 from datetime import datetime
 
-from src.api.schemas import (
+from api.schemas import (
     UserCreate, UserResponse, ChatSessionCreate, ChatSessionResponse,
     ChatMessageRequest, ChatMessageResponse, FinancialDataRequest,
     StockAnalysisRequest, MarketDataResponse, CurrencyConversionRequest,
     WebSocketMessage
 )
-from src.services.user_service import UserService
-from src.services.financial_service import FinancialService
-from src.business_logic.ai_integration import AIIntegration
-from src.business_logic.financial_logic import FinancialLogic
-from src.models.financial_model import FinancialState
+from services.user_service import UserService
+from services.financial_service import FinancialService
+from business_logic.ai_integration import AIIntegration
+from business_logic.financial_logic import FinancialLogic
+from models.financial_model import FinancialState
 
 router = APIRouter()
 

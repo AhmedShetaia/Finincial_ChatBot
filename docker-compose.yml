@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
   app:
     build: .
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      - ENVIRONMENT=development
       - MONGODB_URL=mongodb://mongo:27017
-      - DATABASE_NAME=financial_chatbot
     depends_on:
       - mongo
     volumes:

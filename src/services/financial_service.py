@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
-from src.models.financial_model import FinancialState
-from src.data.financial_tools import (
+from models.financial_model import FinancialState
+from data.financial_tools import (
     fetch_stock_price, fetch_historical_data, fetch_dividends,
     fetch_market_data, fetch_currency_conversion, fetch_company_info
 )

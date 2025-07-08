@@ -5,8 +5,8 @@ import uvicorn
 import os
 from dotenv import load_dotenv
 
-from src.api.routes import router
-from src.data.database import connect_to_mongo, close_mongo_connection
+from api.routes import router
+from data.database import connect_to_mongo, close_mongo_connection
 
 # Load environment variables
 load_dotenv()

@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
-from src.models.user_model import User, ChatSession, ChatMessage
-from src.data.database import get_collection
+from models.user_model import User, ChatSession, ChatMessage
+from data.database import get_collection
 from bson import ObjectId
 from datetime import datetime
 
