@@ -33,18 +33,18 @@ jobs:
         
     - name: Build and push Docker image
       run: |
-        # Build the Docker image using the same process as docker-compose
-        docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:${{ github.sha }} .
+        # Build the Docker image using build number for shorter tags
+        docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:build-${{ github.run_number }} .
         docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:latest .
         
         # Push both tags
-        docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:${{ github.sha }}
+        docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:build-${{ github.run_number }}
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:latest
         
     - name: Deploy to Container App
       uses: azure/container-apps-deploy-action@v1
       with:
-        imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:${{ github.sha }}
+        imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:build-${{ github.run_number }}
         containerAppName: ${{ env.CONTAINER_APP_NAME }}
         resourceGroup: ${{ env.RESOURCE_GROUP }}
         containerAppEnvironment: ${{ env.CONTAINER_APP_ENVIRONMENT }}
@@ -71,7 +71,7 @@ jobs:
             AZURE_OPENAI_API_VERSION="${{ secrets.AZURE_OPENAI_API_VERSION }}" \
             SECRET_KEY="${{ secrets.SECRET_KEY }}" \
             PORT=8000 \
-          --revision-suffix ${{ github.sha }} \
+          --revision-suffix build-${{ github.run_number }} \
           --cpu 0.5 \
           --memory 1.0Gi \
           --min-replicas 1 \
