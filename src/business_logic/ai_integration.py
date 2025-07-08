@@ -17,7 +17,7 @@ class AIIntegration:
     def __init__(self):
         # Set Azure OpenAI endpoint
         self.model = AzureChatOpenAI(
-            deployment_name="gpt-4",
+            deployment_name="gpt-4.1",
             temperature=0.7,
             openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -39,7 +39,7 @@ class AIIntegration:
         ]
 
         self.model= self.model.bind_tools(self.tools) # Bind tools to the model
-        
+
         # Create the workflow graph
         self.graph = self._create_workflow_graph()
     
@@ -97,26 +97,26 @@ Available capabilities:
 Respond naturally to whatever the user says, whether it's a greeting, question, or request for help."""
             )
             
-            # Prepare messages
-            messages = [system_prompt]
-            
-            # Add memory context if available
-            if memory_summary.get("history"):
-                context_message = SystemMessage(content=f"Previous conversation context: {memory_summary['history']}")
-                messages.append(context_message)
-            
-            # Add conversation messages
-            messages.extend(state["messages"])
+            # Prepare messages - only add system prompt if it's not already in the conversation
+            messages = state["messages"]
+            if not messages or not isinstance(messages[0], SystemMessage):
+                messages = [system_prompt] + messages
+                
+                # Add memory context if available
+                if memory_summary.get("history"):
+                    context_message = SystemMessage(content=f"Previous conversation context: {memory_summary['history']}")
+                    messages = [system_prompt, context_message] + state["messages"]
             
             # Get model response
             response = self.model.invoke(messages)
             
-            # Save to memory
-            if state["messages"]:
-                self.memory.save_context(
-                    {"input": state["messages"][-1].content},
-                    {"output": response.content}
-                )
+            # Save to memory only for final responses (not tool calls)
+            if not (hasattr(response, 'tool_calls') and response.tool_calls):
+                if state["messages"] and isinstance(state["messages"][-1], HumanMessage):
+                    self.memory.save_context(
+                        {"input": state["messages"][-1].content},
+                        {"output": response.content}
+                    )
             
             return {"messages": [response]}
             
