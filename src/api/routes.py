@@ -83,10 +83,10 @@ async def chat_websocket(websocket: WebSocket):
             if message_data["type"] == "message":
                 user_message = message_data["content"]
                 
-                # Process message with AI
-                response = await ai_integration.process_message(financial_state, user_message)
+                # Process message with AI using thread_id
+                response = await ai_integration.process_message(user_message, connection_id)
                 
-                # Update state
+                # Update state (response includes new state)
                 financial_state = response["state"]
                 chat_sessions[connection_id] = financial_state
                 

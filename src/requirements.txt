@@ -5,9 +5,11 @@ pydantic
 pydantic-settings
 langchain
 langchain-openai
-langchain-core>=0.3.0
+langchain-core
 langchain-community
 langgraph
+langgraph-checkpoint
+langgraph-checkpoint-sqlite
 yfinance
 python-multipart
 python-dotenv
