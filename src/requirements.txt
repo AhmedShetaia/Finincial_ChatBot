@@ -11,3 +11,4 @@ langgraph
 yfinance
 python-multipart
 python-dotenv
+requests
