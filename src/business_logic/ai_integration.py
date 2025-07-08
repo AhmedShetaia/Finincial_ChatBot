@@ -37,6 +37,8 @@ class AIIntegration:
             fetch_stock_price, fetch_historical_data, fetch_dividends,
             fetch_market_data, fetch_currency_conversion, fetch_company_info
         ]
+
+        self.model= self.model.bind_tools(self.tools) # Bind tools to the model
         
         # Create the workflow graph
         self.graph = self._create_workflow_graph()
