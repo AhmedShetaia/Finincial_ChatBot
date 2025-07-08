@@ -37,6 +37,24 @@ async def root():
         "status": "running"
     }
 
+@app.get("/api/v1/health")
+async def health_check():
+    """Health check endpoint for container health probe"""
+    try:
+        # Simple check that the app is responding
+        return {
+            "status": "healthy",
+            "timestamp": "2025-07-08T00:00:00Z",
+            "service": "financial-chatbot",
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": "2025-07-08T00:00:00Z"
+        }
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(

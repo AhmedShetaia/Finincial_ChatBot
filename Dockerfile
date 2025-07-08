@@ -6,6 +6,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -24,9 +25,9 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/api/v1/health', timeout=10)" || exit 1
+# Health check - using curl instead of requests for better reliability
+HEALTHCHECK --interval=30s --timeout=30s --start-period=90s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
 # Run the application
 CMD ["python", "main.py"]
