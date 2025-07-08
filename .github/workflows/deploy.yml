@@ -1,0 +1,56 @@
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AZURE_CONTAINER_REGISTRY: your-registry.azurecr.io
+  CONTAINER_APP_NAME: financial-chatbot
+  RESOURCE_GROUP: financial-chatbot-rg
+  CONTAINER_APP_ENVIRONMENT: financial-chatbot-env
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Azure Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.AZURE_CONTAINER_REGISTRY }}
+        username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+        password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+        
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ env.AZURE_CONTAINER_REGISTRY }}/financial-chatbot:${{ github.sha }}
+        
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Deploy to Azure Container Apps
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        containerAppName: ${{ env.CONTAINER_APP_NAME }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}/financial-chatbot:${{ github.sha }}
+        environmentVariables: |
+          ENVIRONMENT=production
+          MONGODB_URL=${{ secrets.MONGODB_URL }}
+          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
