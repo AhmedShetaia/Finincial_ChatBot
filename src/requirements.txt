@@ -3,8 +3,6 @@ uvicorn[standard]
 websockets
 pydantic
 pydantic-settings
-motor
-pymongo
 langchain
 langchain-openai
 langchain-core>=0.3.0

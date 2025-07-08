@@ -50,7 +50,5 @@ jobs:
         imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}/financial-chatbot:${{ github.sha }}
         environmentVariables: |
           ENVIRONMENT=production
-          MONGODB_URL=${{ secrets.MONGODB_URL }}
-          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           SECRET_KEY=${{ secrets.SECRET_KEY }}

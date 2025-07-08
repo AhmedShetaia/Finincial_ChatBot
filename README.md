@@ -1,34 +1,33 @@
-# Financial Chatbot Backend
+# Simple Financial Chatbot Backend
 
-A production-ready, AI-powered financial chatbot backend built with FastAPI, MongoDB, and LangChain. This system provides personalized financial advice, real-time market data, and interactive chat capabilities through WebSocket connections.
+A lightweight, AI-powered financial chatbot backend built with FastAPI and LangChain. This system provides personalized financial advice through WebSocket connections with in-memory session management.
 
 ## 🚀 Features
 
 - **Real-time Chat**: WebSocket-based chat interface for instant communication
 - **AI-Powered Advice**: Integration with OpenAI GPT-4 for intelligent financial guidance
-- **Memory Management**: Conversation history and context using LangChain
+- **Memory Management**: In-memory conversation history using LangChain
 - **Financial Tools**: Stock analysis, market data, currency conversion
-- **User Management**: User profiles with personalized risk preferences
-- **Session Management**: Persistent chat sessions with message history
-- **Layered Architecture**: Clean separation of concerns with proper abstraction
+- **Session Management**: Temporary chat sessions stored in memory
+- **Simple Architecture**: Lightweight design without database dependencies
 - **Production Ready**: Docker support, Azure deployment, CI/CD pipeline
 
 ## 🏗️ Architecture
 
-### Layered Architecture
+### Simple Architecture
 ```
 ┌─────────────────────────────────────┐
 │           Presentation Layer        │
-│            (API Routes)             │
+│        (API Routes, WebSocket)      │
 ├─────────────────────────────────────┤
 │          Business Logic Layer       │
 │     (Financial Logic, AI Integration)│
 ├─────────────────────────────────────┤
 │            Service Layer            │
-│    (User Service, Financial Service)│
+│        (Financial Service)          │
 ├─────────────────────────────────────┤
 │             Data Layer              │
-│    (Database, Financial Tools)      │
+│       (Financial Tools, Memory)     │
 └─────────────────────────────────────┘
 ```
 
@@ -47,13 +46,10 @@ chatbot-financial/
 │   │   ├── financial_logic.py # Financial decision logic
 │   │   └── ai_integration.py  # LangChain and AI integration
 │   ├── data/                   # Data Layer
-│   │   ├── database.py        # MongoDB connection and operations
 │   │   └── financial_tools.py # Financial data tools (Yahoo Finance)
 │   ├── services/               # Service Layer
-│   │   ├── user_service.py    # User and session management
 │   │   └── financial_service.py # Financial data services
 │   └── models/                 # Data Models
-│       ├── user_model.py      # User and chat models
 │       └── financial_model.py # Financial state models
 ├── docker-compose.yml          # Local development setup
 ├── Dockerfile                  # Container configuration
@@ -65,11 +61,10 @@ chatbot-financial/
 ## 🛠️ Tech Stack
 
 - **Backend Framework**: FastAPI (async Python)
-- **Database**: MongoDB with Motor (async driver)
 - **AI/ML**: LangChain, OpenAI GPT-4
 - **Financial Data**: Yahoo Finance API (yfinance)
 - **WebSocket**: FastAPI WebSocket support
-- **Memory**: LangChain ConversationSummaryMemory
+- **Memory**: In-memory session storage with LangChain ConversationSummaryMemory
 - **Containerization**: Docker, Docker Compose
 - **Deployment**: Azure Container Apps
 - **CI/CD**: GitHub Actions
@@ -99,8 +94,6 @@ chatbot-financial/
    ```env
    ENVIRONMENT=development
    PORT=8000
-   MONGODB_URL=mongodb://localhost:27017
-   DATABASE_NAME=financial_chatbot
    OPENAI_API_KEY=your_openai_api_key_here
    SECRET_KEY=your_secret_key_here
    ```
@@ -131,23 +124,32 @@ chatbot-financial/
 
 ### Core Endpoints
 
-#### User Management
-- `POST /api/v1/users` - Create a new user
-- `GET /api/v1/users/{user_id}` - Get user details
-- `POST /api/v1/users/{user_id}/sessions` - Create chat session
-- `GET /api/v1/users/{user_id}/sessions` - List user sessions
+#### Health Check
+- `GET /api/v1/health` - Health check endpoint
+- `GET /api/v1/admin/connections` - Monitor active connections
 
-#### Financial Data
-- `POST /api/v1/financial/stock-analysis` - Get stock analysis
-- `GET /api/v1/financial/market-overview` - Get market overview
-- `POST /api/v1/financial/currency-conversion` - Currency conversion
-
-#### WebSocket
-- `WS /api/v1/ws/chat/{session_id}?user_id={user_id}` - Real-time chat
+#### WebSocket Chat
+- `WS /api/v1/ws/chat` - Real-time chat endpoint
 
 ### WebSocket Message Format
 
-**Client to Server:**
+**Initial Connection (Client to Server):**
+```json
+{
+  "type": "init",
+  "data": {
+    "name": "John Doe",
+    "investment_portfolio": {
+      "stocks": 70,
+      "bonds": 20,
+      "cash": 10
+    },
+    "risk_level": "moderate"
+  }
+}
+```
+
+**Chat Message (Client to Server):**
 ```json
 {
   "type": "message",
@@ -155,13 +157,14 @@ chatbot-financial/
 }
 ```
 
-**Server to Client:**
+**Server Response:**
 ```json
 {
   "type": "message",
   "content": "The current price of AAPL is $150.25",
   "is_user": false,
-  "timestamp": "2024-01-15T10:30:00Z"
+  "timestamp": "2024-01-15T10:30:00Z",
+  "action": "stock_price"
 }
 ```
 
@@ -221,7 +224,6 @@ The system supports different bot personalities configured via environment varia
    - `AZURE_CREDENTIALS`
    - `AZURE_REGISTRY_USERNAME`
    - `AZURE_REGISTRY_PASSWORD`
-   - `MONGODB_URL` (MongoDB Atlas connection string)
    - `OPENAI_API_KEY`
    - `SECRET_KEY`
 
@@ -237,37 +239,55 @@ docker build -t financial-chatbot .
 # Run container
 docker run -p 8000:8000 \
   -e OPENAI_API_KEY=your_key \
-  -e MONGODB_URL=your_mongodb_url \
   financial-chatbot
 ```
 
 ## 🧪 Testing
 
-### API Testing with curl
+### WebSocket Testing with JavaScript
 
-**Create a user:**
+```javascript
+const ws = new WebSocket('ws://localhost:8000/api/v1/ws/chat');
+
+// Initialize connection
+ws.onopen = function() {
+    ws.send(JSON.stringify({
+        type: 'init',
+        data: {
+            name: 'John Doe',
+            investment_portfolio: {
+                stocks: 70,
+                bonds: 20,
+                cash: 10
+            },
+            risk_level: 'moderate'
+        }
+    }));
+};
+
+// Send a message
+ws.send(JSON.stringify({
+    type: 'message',
+    content: 'What should I invest in?'
+}));
+
+// Receive messages
+ws.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    console.log('Bot:', data.content);
+};
+```
+
+### Health Check Testing
+
 ```bash
-curl -X POST "http://localhost:8000/api/v1/users" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "preferred_risk_level": "moderate"
-  }'
+curl -X GET "http://localhost:8000/api/v1/health"
 ```
 
-**Get stock analysis:**
+### Connection Monitoring
+
 ```bash
-curl -X POST "http://localhost:8000/api/v1/financial/stock-analysis" \
-  -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
-```
-
-### WebSocket Testing
-
-Use a WebSocket client to connect to:
-```
-ws://localhost:8000/api/v1/ws/chat/{session_id}?user_id={user_id}
+curl -X GET "http://localhost:8000/api/v1/admin/connections"
 ```
 
 ## 📊 Monitoring
@@ -283,6 +303,7 @@ Application logs are structured and include:
 - Error handling
 - WebSocket connection events
 - AI processing steps
+- Session lifecycle events
 
 ## 🔒 Security
 
@@ -321,13 +342,14 @@ Application logs are structured and include:
 ### LangChain Integration
 - **ConversationSummaryMemory**: Maintains conversation context
 - **Automatic Summarization**: Reduces memory usage for long conversations
-- **Persistent Storage**: Chat history stored in MongoDB
+- **In-Memory Storage**: Chat history stored in application memory
 - **Context Retrieval**: Previous conversations inform current responses
 
 ### Memory Management
-- Memory reset per session
+- Memory reset per WebSocket session
 - Summary generation every 2 messages
-- Context preservation across WebSocket reconnections
+- Context cleared when WebSocket disconnects
+- Session-based memory isolation
 
 ## 🐛 Troubleshooting
 
@@ -340,11 +362,6 @@ docker-compose down -v
 docker-compose up -d
 ```
 
-**MongoDB Connection:**
-- Check MongoDB URL in environment variables
-- Ensure MongoDB service is running
-- Verify network connectivity
-
 **OpenAI API Issues:**
 - Verify API key is correct
 - Check API quota and usage
@@ -352,8 +369,9 @@ docker-compose up -d
 
 **WebSocket Connection:**
 - Check CORS configuration
-- Verify user and session IDs
+- Verify initialization message format
 - Monitor server logs for errors
+- Ensure proper session cleanup
 
 ## 📋 Roadmap
 
@@ -369,10 +387,10 @@ docker-compose up -d
 
 ### Performance Improvements
 - [ ] Redis caching layer
-- [ ] Database indexing optimization
 - [ ] API response compression
 - [ ] Load balancing support
 - [ ] Horizontal scaling
+- [ ] Session persistence options
 
 ## 📄 License
 

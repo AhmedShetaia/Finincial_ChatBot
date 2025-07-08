@@ -1,4 +1,4 @@
-from langchain_openai import ChatOpenAI
+from langchain_openai import AzureChatOpenAI
 from langchain.memory import ConversationSummaryMemory
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
@@ -15,10 +15,13 @@ from typing import Dict, Any
 
 class AIIntegration:
     def __init__(self):
-        self.model = ChatOpenAI(
-            model="gpt-4",
+        # Set Azure OpenAI endpoint
+        self.model = AzureChatOpenAI(
+            deployment_name="gpt-4",
             temperature=0.7,
-            api_key=os.getenv("OPENAI_API_KEY")
+            openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION")
         )
         
         # Initialize memory
@@ -70,16 +73,26 @@ class AIIntegration:
             
             # Create system prompt
             system_prompt = SystemMessage(
-                content="""You are a helpful financial assistant. You can help users with:
-                - Stock analysis and market data
-                - Investment advice and portfolio planning
-                - Budgeting and financial planning
-                - Currency conversion
-                - Market insights
-                
-                Use the available tools when users ask for specific financial data.
-                Provide personalized advice based on user's risk tolerance and financial goals.
-                Always remind users that this is general guidance and they should consult professional advisors for major financial decisions."""
+                content="""You are a helpful and conversational financial assistant named FinBot. You should:
+
+1. Always respond directly to the user's question or message
+2. Be friendly, conversational, and personable
+3. Provide helpful financial advice and information
+4. Ask follow-up questions when you need more details
+5. Explain financial concepts in simple terms
+6. Use the available tools when users ask for specific financial data like stock prices, market data, etc.
+7. Provide personalized advice based on user's risk tolerance and financial goals when known
+8. Always remind users that this is general guidance and they should consult professional advisors for major financial decisions
+
+Available capabilities:
+- Stock analysis and market data
+- Investment advice and portfolio planning  
+- Budgeting and financial planning
+- Currency conversion
+- Market insights
+- General financial education
+
+Respond naturally to whatever the user says, whether it's a greeting, question, or request for help."""
             )
             
             # Prepare messages
@@ -128,36 +141,33 @@ class AIIntegration:
             current_state = dict(state)
             current_state["messages"] = state.get("messages", []) + [human_message]
             
-            # Use business logic to determine response type
+            # Use business logic to determine if tools are needed
             logic_response = FinancialLogic.process_financial_request(current_state, user_message)
             
-            # If it's a simple response that doesn't need tools, return directly
-            if not logic_response.get("requires_tools", False):
-                ai_response = AIMessage(content=logic_response["response"])
+            # Always use the AI model to generate responses, but check if tools are needed
+            if logic_response.get("requires_tools", False):
+                # For tool-requiring responses, use the graph
+                final_state = await self.graph.ainvoke(current_state)
+                final_response = final_state["messages"][-1].content if final_state["messages"] else "I'm sorry, I couldn't process your request."
                 
-                # Save to memory
-                self.memory.save_context(
-                    {"input": user_message},
-                    {"output": ai_response.content}
-                )
+                return {
+                    "response": final_response,
+                    "action": logic_response["action"],
+                    "state": final_state
+                }
+            else:
+                # For responses that don't need tools, still use the AI model but skip graph
+                model_response = self._model_call(current_state)
+                ai_response = model_response["messages"][0] if model_response["messages"] else AIMessage(content="I'm sorry, I couldn't process your request.")
+                
+                # Update state with the AI response
+                current_state["messages"].append(ai_response)
                 
                 return {
                     "response": ai_response.content,
                     "action": logic_response["action"],
                     "state": current_state
                 }
-            
-            # For tool-requiring responses, use the graph
-            final_state = await self.graph.ainvoke(current_state)
-            
-            # Get the final response
-            final_response = final_state["messages"][-1].content if final_state["messages"] else "I'm sorry, I couldn't process your request."
-            
-            return {
-                "response": final_response,
-                "action": logic_response["action"],
-                "state": final_state
-            }
             
         except Exception as e:
             return {

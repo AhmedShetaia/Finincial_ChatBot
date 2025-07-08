@@ -5,23 +5,6 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    environment:
-      - MONGODB_URL=mongodb://mongo:27017
-    depends_on:
-      - mongo
     volumes:
       - ./src:/app
     restart: unless-stopped
-
-  mongo:
-    image: mongo:7.0
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=financial_chatbot
-    volumes:
-      - mongo_data:/data/db
-    restart: unless-stopped
-
-volumes:
-  mongo_data:

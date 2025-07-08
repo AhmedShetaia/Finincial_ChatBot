@@ -1,30 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 import uvicorn
 import os
 from dotenv import load_dotenv
 
 from api.routes import router
-from data.database import connect_to_mongo, close_mongo_connection
 
 # Load environment variables
 load_dotenv()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    await connect_to_mongo()
-    yield
-    # Shutdown
-    await close_mongo_connection()
-
 # Create FastAPI app
 app = FastAPI(
     title="Financial Chatbot API",
-    description="A production-ready financial chatbot backend with AI integration",
-    version="1.0.0",
-    lifespan=lifespan
+    description="A simple financial chatbot backend with AI integration",
+    version="1.0.0"
 )
 
 # Add CORS middleware
